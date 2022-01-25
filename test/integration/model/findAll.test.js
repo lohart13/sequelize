@@ -1495,6 +1495,79 @@ describe(Support.getTestDialectTeaser('Model'), () => {
         }
       });
     });
+
+    describe('system time query', () => {
+      beforeEach(async function () {
+        this.User = this.sequelize.define('User', {
+          username: Sequelize.STRING,
+          password: Sequelize.STRING,
+          createdAt: Sequelize.DATE,
+          updatedAt: Sequelize.DATE,
+        });
+        await this.sequelize.sync({ force: true });
+        await this.User.create({ username: 'foo' });
+      });
+
+      if (dialect === 'mssql') {
+        before(async function () {
+          this.sequelize.options.dialectOptions = { ...this.sequelize.options.dialectOptions, versioning: true };
+        });
+        after(async function () {
+          await this.sequelize.drop();
+          this.sequelize.options.dialectOptions = { ...this.sequelize.options.dialectOptions, versioning: null };
+        });
+
+        it('find all versions', async function () {
+          await this.User.update({ password: 'foo' }, { where: { username: 'foo' } });
+          await this.User.update({ password: 'bar' }, { where: { username: 'foo' } });
+          const versions = await this.User.findAll({ systemTime: { type: 'ALL' } });
+          expect(versions).to.have.length(3);
+          expect(versions[0].password).to.equal('bar');
+          expect(versions[1].password).to.equal(null);
+          expect(versions[2].password).to.equal('foo');
+        });
+
+        it('get version as of', async function () {
+          const before = new Date();
+          await this.User.update({ password: 'foo' }, { where: { username: 'foo' } });
+          const after = new Date();
+          const afterVersion = await this.User.findAll({ systemTime: { type: 'ASOF', startDate: after } });
+          const beforeVersion = await this.User.findAll({ systemTime: { type: 'ASOF', startDate: before } });
+          expect(afterVersion).to.have.length(1);
+          expect(beforeVersion).to.have.length(1);
+          expect(afterVersion[0].password).to.equal('foo');
+          expect(beforeVersion[0].password).to.equal(null);
+        });
+
+        it('get version between', async function () {
+          const before = new Date();
+          await this.User.update({ password: 'foo' }, { where: { username: 'foo' } });
+          await this.User.update({ password: 'bar' }, { where: { username: 'foo' } });
+          const after = new Date();
+          const versions = await this.User.findAll({ systemTime: { type: 'BETWEEN', startDate: before, endDate: after } });
+
+          expect(versions).to.have.length(3);
+          expect(versions[0].password).to.equal('bar');
+          expect(versions[1].password).to.equal(null);
+          expect(versions[2].password).to.equal('foo');
+        });
+
+        it('get version contained', async function () {
+          const before = new Date();
+          await this.User.update({ password: 'foo' }, { where: { username: 'foo' } });
+          await this.User.update({ password: 'bar' }, { where: { username: 'foo' } });
+          const after = new Date();
+          const versions = await this.User.findAll({ systemTime: { type: 'CONTAINED', startDate: before, endDate: after } });
+
+          expect(versions).to.have.length(1);
+          expect(versions[0].password).to.equal('foo');
+        });
+      } else {
+        it('system time queries only supported in some dialects', async function () {
+          await expect(this.User.findAll({ systemTime: { type: 'ALL' } })).to.eventually.be.rejectedWith('The method "generateSystemTimeQuery" is not defined! Please add it to your sql dialect.');
+        });
+      }
+    });
   });
 
   describe('findAndCountAll', () => {

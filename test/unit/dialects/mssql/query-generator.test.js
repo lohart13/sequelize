@@ -87,8 +87,13 @@ if (current.dialect.name === 'mssql') {
     });
 
     it('createTableQuery', function () {
+      // Base case
       expectsql(this.queryGenerator.createTableQuery('myTable', { int: 'INTEGER' }, {}), {
         mssql: 'IF OBJECT_ID(\'[myTable]\', \'U\') IS NULL CREATE TABLE [myTable] ([int] INTEGER);',
+      });
+      // System versioned tables
+      expectsql(this.queryGenerator.createTableQuery('myTable', { int: 'INTEGER' }, { dialectOptions: { versioning: true } }), {
+        mssql: 'IF OBJECT_ID(\'[myTable]\', \'U\') IS NULL CREATE TABLE [myTable] ([int] INTEGER, SysStartTime DATETIME2 GENERATED ALWAYS AS ROW START NOT NULL, SysEndTime DATETIME2 GENERATED ALWAYS AS ROW END NOT NULL, PERIOD FOR SYSTEM_TIME (SysStartTime,SysEndTime)) WITH (SYSTEM_VERSIONING = ON (HISTORY_TABLE = [dbo].[myTableHistory]));',
       });
     });
 
@@ -278,7 +283,7 @@ if (current.dialect.name === 'mssql') {
 
     it('dropTableQuery', function () {
       expectsql(this.queryGenerator.dropTableQuery('dirtyTable'), {
-        mssql: 'IF OBJECT_ID(\'[dirtyTable]\', \'U\') IS NOT NULL DROP TABLE [dirtyTable];',
+        mssql: 'IF EXISTS (SELECT temporal_type FROM sys.tables WHERE object_id = OBJECT_ID(\'[dirtyTable]\', \'U\') AND temporal_type = 2) ALTER TABLE [dirtyTable] SET ( SYSTEM_VERSIONING = OFF ) IF OBJECT_ID(\'[dirtyTableHistory]\', \'U\') IS NOT NULL DROP TABLE [dirtyTableHistory]; IF OBJECT_ID(\'[dirtyTable]\', \'U\') IS NOT NULL DROP TABLE [dirtyTable];',
       });
     });
 
