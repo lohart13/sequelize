@@ -494,6 +494,15 @@ export type OrderItem =
 export type Order = Fn | Col | Literal | OrderItem[];
 
 /**
+ * System time options for system time queries with findAll
+ */
+export interface SystemTimeOptions {
+  type: string;
+  startDate: Date;
+  endDate?: Date;
+}
+
+/**
  * Please note if this is used the aliased property will not be available on the model instance
  * as a property but only via `instance.get('alias')`.
  */
@@ -622,6 +631,11 @@ export interface FindOptions<TAttributes = any>
    * See {@link FindOptions#limit} for more information.
    */
   subQuery?: boolean;
+
+  /**
+   * SystemTime query for point in time data.
+   */
+  systemTime?: SystemTimeOptions;
 }
 
 export interface NonNullFindOptions<TAttributes = any> extends FindOptions<TAttributes> {
