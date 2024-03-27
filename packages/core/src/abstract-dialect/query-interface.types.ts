@@ -4,6 +4,7 @@ import type { TemporalTableOptions } from '../temporal-tables';
 import type { IsolationLevel } from '../transaction';
 import type {
   AddConstraintQueryOptions,
+  AddIndexQueryOptions,
   AddTemporalTableQueryOptions,
   BulkDeleteQueryOptions,
   ChangeTemporalTableQueryOptions,
@@ -16,6 +17,7 @@ import type {
   ListTablesQueryOptions,
   RemoveColumnQueryOptions,
   RemoveConstraintQueryOptions,
+  RemoveIndexQueryOptions,
   RenameTableQueryOptions,
   ShowConstraintsQueryOptions,
   ShowTemporalPeriodsQueryOptions,
@@ -76,6 +78,25 @@ export interface ConstraintDescription {
   updateAction?: string;
   definition?: string;
   deferrable?: Deferrable;
+}
+
+export interface IndexFieldDescription {
+  name: string;
+  length: number | undefined;
+  order: 'DESC' | 'ASC';
+  collate: string | undefined;
+}
+
+export interface IndexDescription {
+  schema?: string;
+  tableName: string;
+  name: string;
+  type?: string;
+  using?: string;
+  fields: IndexFieldDescription[];
+  includes?: string[];
+  primary: boolean;
+  unique: boolean;
 }
 
 /** Options accepted by {@link AbstractQueryInterface#createDatabase} */
@@ -171,6 +192,14 @@ export interface RemoveConstraintOptions extends RemoveConstraintQueryOptions, Q
 
 /** Options accepted by {@link AbstractQueryInterface#showConstraints} */
 export interface ShowConstraintsOptions extends ShowConstraintsQueryOptions, QueryRawOptions {}
+
+/** Options accepted by {@link AbstractQueryInterface#addIndex} */
+export interface QiAddIndexOptions extends AddIndexQueryOptions, Omit<QueryRawOptions, 'type'> {}
+
+/** Options accepted by {@link AbstractQueryInterface#removeIndex} */
+export interface QiRemoveIndexOptions
+  extends RemoveIndexQueryOptions,
+    Omit<QueryRawOptions, 'type'> {}
 
 /** Options accepted by {@link AbstractQueryInterface#_commitTransaction} */
 export interface CommitTransactionOptions
