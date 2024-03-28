@@ -11,6 +11,7 @@ import type {
   NormalizedAttributeOptions,
 } from '../model';
 import type { QueryRawOptions, QueryRawOptionsWithModel } from '../sequelize';
+import type { TemporalTableOptions, TemporalTableType } from '../temporal-tables.js';
 import type { AllowLowercase } from '../utils/types.js';
 import type { DataType } from './data-types.js';
 import type { AbstractDialect } from './dialect.js';
@@ -59,8 +60,12 @@ export interface CollateCharsetOptions {
   charset?: string;
 }
 
-export interface QueryInterfaceCreateTableOptions extends QueryRawOptions, CollateCharsetOptions {
+export interface QueryInterfaceCreateTableOptions
+  extends QueryRawOptions,
+    CollateCharsetOptions,
+    Omit<TemporalTableOptions, 'temporalTableType'> {
   engine?: string;
+  temporalTableType?: Exclude<TemporalTableType, TemporalTableType.NON_TEMPORAL>;
   /**
    * Used for compound unique keys.
    */
@@ -217,6 +222,7 @@ export class AbstractQueryInterface<
     tableName: TableName,
     attributes: CreateTableAttributes<M, CreationAttributes<M>>,
     options?: QueryInterfaceCreateTableOptions,
+    model?: ModelStatic<M>,
   ): Promise<void>;
 
   /**

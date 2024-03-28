@@ -244,6 +244,7 @@ export type DialectSupports = {
   uuidV4Generation: boolean;
   dropTable: {
     cascade: boolean;
+    dropHistoryTable: boolean;
   };
   maxExecutionTimeHint: {
     select: boolean;
@@ -271,6 +272,16 @@ export type DialectSupports = {
   dropSchema: {
     cascade: boolean;
     ifExists: boolean;
+  };
+  /**
+   * Whether this dialect support temporal tables and what temporal tables features it supports.
+   */
+  temporalTables: {
+    applicationPeriod: boolean;
+    biTemporal: boolean;
+    historyTable: boolean;
+    historyRetentionPeriod: boolean;
+    systemPeriod: boolean;
   };
   delete: {
     limit: boolean;
@@ -476,6 +487,7 @@ export abstract class AbstractDialect<
     uuidV4Generation: false,
     dropTable: {
       cascade: false,
+      dropHistoryTable: false,
     },
     maxExecutionTimeHint: {
       select: false,
@@ -503,6 +515,13 @@ export abstract class AbstractDialect<
     dropSchema: {
       cascade: false,
       ifExists: false,
+    },
+    temporalTables: {
+      applicationPeriod: false,
+      biTemporal: false,
+      historyTable: false,
+      historyRetentionPeriod: false,
+      systemPeriod: false,
     },
     delete: {
       limit: true,
